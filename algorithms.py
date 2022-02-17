@@ -16,6 +16,7 @@ class IIL_algorithm:
         self.logger = logger
     
     def run(self, num_of_episodes):
+        avg_len = 0
         for ep_no in range(1, num_of_episodes+1):
             print(f"Episode No.: {ep_no}", end="\t")
             count = 0
@@ -61,6 +62,9 @@ class IIL_algorithm:
 
             print(f"[Episode Length: {count}]")
             self.logger.log(DataType.num, data = count, key = "Episode Length")
+            avg_len += count/num_of_episodes
+        
+        return avg_len
 
 class RL_algorithm:
     def __init__(self, env, trainer, replay_buffer, noise = 0.0, logger = None):
@@ -73,6 +77,7 @@ class RL_algorithm:
         self.logger = logger
     
     def run(self, num_of_episodes):
+        avg_len = 0
         for ep_no in range(1, num_of_episodes+1):
             print(f"Episode No.: {ep_no}", end="\t")
             count = 0
@@ -103,6 +108,9 @@ class RL_algorithm:
 
             print(f"[Episode Length: {count}]")
             self.logger.log(DataType.num, data = count, key = "Episode Length")
+            avg_len += count/num_of_episodes
+
+        return avg_len
 
 class Test_algorithm:
     def __init__(self, env, tester):
