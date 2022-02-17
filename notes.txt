@@ -1,0 +1,17 @@
+How it works:
+
+1. execute model in env for a single step and store to replay buffer
+2. train the model on the replay buffer with an algorithm
+
+model:
+
+action = actor_model(state)
+q-value = critic_model(state, action)
+
+algorithm:
+
+standard:
+algorithm(model, replay_buffer)
+
+iil:
+algorithm(model, expert, replay_buffer)
