@@ -38,6 +38,13 @@ class NNActor(nn.Module):
         noise_tensor = 2*torch.rand(1).to(device) - 1
         output = noise*noise_tensor + (1-noise)*output
         return output
+
+    def check_bad_state(self, state):
+        # np.array([x, x_dot, theta, theta_dot])
+        if(abs(state[0]) >= 2.0) or (abs(state[1]) >= 3) or (abs(state[2]) >= 10*2*math.pi/360) or (abs(state[3]) >= 4):
+            return True
+        else:
+            return False
     
 class NNCritic(nn.Module):
     def __init__(self):

@@ -139,7 +139,10 @@ class SLRL(Trainer):
         if(actor_loss_ is None):
             actor_loss = negative_value
         else:
-            actor_loss = actor_loss_ + negative_value
+            if(negative_value is not None):
+                actor_loss = actor_loss_ + negative_value
+            else:
+                actor_loss = actor_loss_
 
         # 11. Optimize actor")
         if(actor_loss is not None):
@@ -190,8 +193,10 @@ class SL(Trainer):
         transitions = self.replay_buffer.sample(self.batch_size)
         state, action, demonstration_flag, reward, termination_flag, next_state = Transition(*zip(*transitions))
 
-        state = state.to(self.device)
-        action = action.to(self.device)
+        with torch.no_grad():
+            state = torch.stack(state).to(self.device)
+            action = torch.stack(action).to(self.device)
+            demonstration_flag = torch.stack(demonstration_flag)
 
         # 1. Compute actor actions")
         actor_action = self.actor_model(state = state)
@@ -209,7 +214,7 @@ class SL(Trainer):
             actor_loss = actor_se.mean()
 
         # 3. Optimize actor")
-        self.actor_optimizer.zero_grad(set_to_none = True)
+        self.actor_optimizer.zero_grad()
         actor_loss.backward()
         self.actor_optimizer.step()
 

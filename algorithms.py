@@ -15,11 +15,14 @@ class IIL_algorithm:
         self.noise = noise
         self.logger = logger
     
-    def run(self, num_of_episodes):
+    def run(self, num_of_episodes, offset_steps = 0):
         avg_len = 0
+        avg_sup = 0
+        avg_agn = 0
         for ep_no in range(1, num_of_episodes+1):
             print(f"Episode No.: {ep_no}", end="\t")
             count = 0
+            count_supervised = 0
             next_demo = False
             done = False
             next_state = self.env.reset()
@@ -33,6 +36,7 @@ class IIL_algorithm:
                     action_tensor = self.agent(state_tensor, noise = self.noise)
                 else:
                     action_tensor = self.expert(state_tensor)
+                    count_supervised += 1
 
                 next_state, reward, done, info = self.env.step(np.array(action_tensor.detach().cpu(), dtype = np.float32))
 
@@ -56,15 +60,22 @@ class IIL_algorithm:
                 )
 
                 if(self.trainer is not None):
-                    self.trainer.train_one_mini_batch(self.replay_buffer)
+                    self.trainer.train_one_mini_batch()
                 
                 count += 1
 
-            print(f"[Episode Length: {count}]")
-            self.logger.log(DataType.num, data = count, key = "Episode Length")
+            print(f"[Episode Length: {count}]", end = "\t")
+            print(f"[Supervised Frames: {count_supervised}]")
+            print(f"[Agent Frames: {count-count_supervised}]")
+            offset_steps += count_supervised
+
+            log_dict = {"Episode Length": count, "Supervised Frames": count_supervised, "Agent Frames": count-count_supervised, "Steps": offset_steps}
+            self.logger.log(DataType.dict, data = log_dict, key = None)
             avg_len += count/num_of_episodes
+            avg_sup += count_supervised/num_of_episodes
+            avg_agn += (count-count_supervised)/num_of_episodes
         
-        return avg_len
+        return avg_len, avg_sup, avg_agn, offset_steps
 
 class RL_algorithm:
     def __init__(self, env, trainer, replay_buffer, noise = 0.0, logger = None):
