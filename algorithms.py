@@ -14,15 +14,19 @@ class IIL_algorithm:
         self.replay_buffer = replay_buffer
         self.noise = noise
         self.logger = logger
+        self.global_step = 0
+        self.global_supervisor_step = 0
     
-    def run(self, num_of_episodes, offset_steps = 0):
+    def run(self, num_of_episodes):
         avg_len = 0
         avg_sup = 0
         avg_agn = 0
         for ep_no in range(1, num_of_episodes+1):
             print(f"Episode No.: {ep_no}", end="\t")
-            count = 0
-            count_supervised = 0
+            episode_step = 0
+            episode_supervisor_step = 0
+            episode_agent_step = 0
+            episode_agent_step_list = []
             next_demo = False
             done = False
             next_state = self.env.reset()
@@ -34,9 +38,10 @@ class IIL_algorithm:
 
                 if(demo == False):
                     action_tensor = self.agent(state_tensor, noise = self.noise)
+                    episode_agent_step += 1
                 else:
                     action_tensor = self.expert(state_tensor)
-                    count_supervised += 1
+                    episode_supervisor_step += 1
 
                 next_state, reward, done, info = self.env.step(np.array(action_tensor.detach().cpu(), dtype = np.float32))
 
@@ -47,6 +52,8 @@ class IIL_algorithm:
                 
                 if(next_demo == True and demo == False) or done == True:
                     termination_flag = True
+                    episode_agent_step_list.append(episode_agent_step)
+                    episode_agent_step = 0
                 else:
                     termination_flag = False
 
@@ -62,20 +69,30 @@ class IIL_algorithm:
                 if(self.trainer is not None):
                     self.trainer.train_one_mini_batch()
                 
-                count += 1
+                episode_step += 1
 
-            print(f"[Episode Length: {count}]", end = "\t")
-            print(f"[Supervised Frames: {count_supervised}]")
-            print(f"[Agent Frames: {count-count_supervised}]")
-            offset_steps += count_supervised
+            self.global_step += episode_step
+            self.global_supervisor_step += episode_supervisor_step
+            episode_agent_step_avg = sum(episode_agent_step_list)/len(episode_agent_step_list)
 
-            log_dict = {"Episode Length": count, "Supervised Frames": count_supervised, "Agent Frames": count-count_supervised, "Steps": offset_steps}
+            avg_len += episode_step/num_of_episodes
+            avg_sup += episode_supervisor_step/num_of_episodes
+            avg_agn += episode_agent_step_avg/num_of_episodes
+
+            print(f"[Episode Length: {episode_step}]", end = "\t")
+            print(f"[Supervised Steps: {episode_supervisor_step}]", end = "\t")
+            print(f"[Average Agent Steps: {episode_agent_step_avg}]")
+
+            log_dict = {
+                "Episode Length": episode_step, 
+                "Supervised Frames": episode_supervisor_step, 
+                "Agent Frames": episode_agent_step_avg, 
+                "Supervised Steps": self.global_supervisor_step,
+                "Steps": self.global_step}
+
             self.logger.log(DataType.dict, data = log_dict, key = None)
-            avg_len += count/num_of_episodes
-            avg_sup += count_supervised/num_of_episodes
-            avg_agn += (count-count_supervised)/num_of_episodes
         
-        return avg_len, avg_sup, avg_agn, offset_steps
+        return avg_len, avg_sup, avg_agn, self.global_step, self.global_supervisor_step
 
 class RL_algorithm:
     def __init__(self, env, trainer, replay_buffer, noise = 0.0, logger = None):

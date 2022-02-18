@@ -7,19 +7,31 @@ from logger import *
 
 import torch
 import os
+import sys
+import math
+import pickle
 
-run_name = "rl_training"
-run_id = 5
+run_name = "rl_training_liberal"
+run_id = 1
 
-save_path = f'data/model/{run_name}/{run_id}'
-os.makedirs(save_path, exist_ok=True)
+model_save_path = f'data/model/{run_name}/{run_id}'
+logs_save_path = f'data/logs/{run_name}'
+os.makedirs(model_save_path, exist_ok=True)
+os.makedirs(logs_save_path, exist_ok=True)
 
 env = MaxStepContinuousCartPoleEnv()
 
 actor_model = NNActor()
 critic_model = NNCritic()
 
-expert_model = NNActor()
+intervention_threshold = dict(
+    x = 2.0,
+    x_dot = 3.0,
+    theta = 12*2*math.pi/360,
+    theta_dot = 4.0
+)
+
+expert_model = NNActor(intervention_thresholds=intervention_threshold)
 expert_model.load_state_dict(torch.load("data/model/expert_training/5/12700.pth"))
 expert_model.eval()
 
@@ -49,15 +61,18 @@ trainer = SLRL(
     device = 'cpu',
     **trainer_config)
 
-logger = WandbLogger(name = run_name, id = run_id, config_dict = dict(trainer = trainer_config, algorithm = algorithm_config))
+logger = WandbLogger(name = run_name, id = run_id, config_dict = dict(trainer = trainer_config, algorithm = algorithm_config, intervention_threshold = intervention_threshold))
 
 algo = IIL_algorithm(env, trainer, expert_model, replay_buffer, noise = algorithm_config['noise'], logger = logger)
 
+logs = []
 save_id = 0
 N = 10
-steps = 0
 while True:
-    avg_len, avg_sup, avg_agn, steps = algo.run(N, steps)
+    avg_len, avg_sup, avg_agn, steps, supervised_steps = algo.run(N)
+    logs.append((avg_len, avg_sup, avg_agn, steps, supervised_steps))
+    pickle.dump(logs, open(f'{logs_save_path}/{run_id}.p',"wb"))
     if(avg_agn >= 2900):
-        torch.save(trainer.actor_model.state_dict(), f'{save_path}/{save_id}.pth')
+        torch.save(trainer.actor_model.state_dict(), f'{model_save_path}/{save_id}.pth')
+        sys.exit()
     save_id += N
