@@ -159,3 +159,74 @@ class Test_algorithm:
                 action_tensor = agent(state_tensor)
 
                 next_state, reward, done, info = self.env.step(np.array(action_tensor, dtype = np.float32))
+
+class SL_algorithm:
+    def __init__(self, env, trainer, expert, replay_buffer, noise = 0.0, logger = None):
+        self.env = env
+        self.trainer = trainer
+        self.device = self.trainer.device
+        self.agent = self.trainer.actor_model
+        self.expert = expert
+        self.replay_buffer = replay_buffer
+        self.noise = noise
+        self.logger = logger
+        self.global_supervisor_step = 0
+    
+    def run(self, num_of_episodes):
+        avg_agn = 0
+        next_demo = True
+        for ep_no in range(1, 2*num_of_episodes+1):
+            print(f"Episode No.: {ep_no}", end="\t")
+            episode_step = 0
+            done = False
+            next_state = self.env.reset()
+            while done == False:
+                demo = next_demo
+                state = next_state
+
+                state_tensor = torch.tensor(state, dtype = torch.float32).to(self.device)
+
+                if(demo == False):
+                    action_tensor = self.agent(state_tensor, noise = self.noise)
+                else:
+                    action_tensor = self.expert(state_tensor)
+
+                next_state, reward, done, info = self.env.step(np.array(action_tensor.detach().cpu(), dtype = np.float32))
+
+                if done == True:
+                    termination_flag = True
+                    next_demo = not demo
+                else:
+                    termination_flag = False
+
+                if(demo == True):
+                    self.replay_buffer.push(
+                        state = state_tensor,
+                        action = action_tensor,
+                        demonstration_flag = torch.tensor(demo, dtype = torch.float32),
+                        reward = reward,
+                        termination_flag = torch.tensor(termination_flag, dtype = torch.float32),
+                        next_state = torch.tensor(next_state, dtype = torch.float32),
+                    )
+
+                    self.trainer.train_one_mini_batch()
+                
+                episode_step += 1
+
+            if(demo == True):
+                self.global_supervisor_step += episode_step
+                print(f"[Supervisor Steps: {episode_step}]")
+            else:
+                agent_step = episode_step
+                avg_agn += agent_step/num_of_episodes
+
+                print(f"[Agent Steps: {agent_step}]")
+
+                log_dict = {
+                    "Agent Frames": agent_step, 
+                    "Supervised Steps": self.global_supervisor_step,
+                    }
+
+                self.logger.log(DataType.dict, data = log_dict, key = None)
+        
+        return avg_agn, self.global_supervisor_step
