@@ -5,7 +5,7 @@ from utils import *
 from logger import *
 
 class IIL_algorithm:
-    def __init__(self, env, trainer, expert, replay_buffer, noise = 0.0, logger = None):
+    def __init__(self, env, trainer, expert, replay_buffer, noise = 0.0, logger = None, offset_supervisor_steps = 0):
         self.env = env
         self.trainer = trainer
         self.device = self.trainer.device
@@ -15,7 +15,7 @@ class IIL_algorithm:
         self.noise = noise
         self.logger = logger
         self.global_step = 0
-        self.global_supervisor_step = 0
+        self.global_supervisor_step = offset_supervisor_steps
     
     def run(self, num_of_episodes):
         avg_len = 0

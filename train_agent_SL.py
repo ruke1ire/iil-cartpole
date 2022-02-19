@@ -11,8 +11,8 @@ import os
 import math
 import sys
 
-run_name = "sl_training_liberal"
-run_id = 3
+run_name = "hg_dagger_training_conservative"
+run_id = 23
 
 model_save_path = f'data/model/{run_name}/{run_id}'
 logs_save_path = f'data/logs/{run_name}'
@@ -22,12 +22,13 @@ os.makedirs(logs_save_path, exist_ok=True)
 env = MaxStepContinuousCartPoleEnv()
 
 actor_model = NNActor()
+actor_model.load_state_dict(torch.load("data/model/bc_training/101/2.pth"))
 critic_model = NNCritic()
 
 intervention_threshold = dict(
-    x = 2.0,
+    x = 1.5,
     x_dot = 3.0,
-    theta = 12*2*math.pi/360,
+    theta = 7.5*2*math.pi/360,
     theta_dot = 4.0
 )
 
@@ -56,7 +57,7 @@ trainer = SL(
 
 logger = WandbLogger(name = run_name, id = run_id, config_dict = dict(trainer = trainer_config, algorithm = algorithm_config, intervention_threshold = intervention_threshold))
 
-algo = IIL_algorithm(env, trainer, expert_model, replay_buffer, noise = algorithm_config['noise'], logger = logger)
+algo = IIL_algorithm(env, trainer, expert_model, replay_buffer, noise = algorithm_config['noise'], logger = logger, offset_supervisor_steps=9000)
 
 logs = []
 save_id = 0

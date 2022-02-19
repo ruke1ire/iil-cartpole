@@ -12,7 +12,7 @@ import math
 import sys
 
 run_name = "bc_training"
-run_id = 11
+run_id = 101
 
 model_save_path = f'data/model/{run_name}/{run_id}'
 logs_save_path = f'data/logs/{run_name}'
@@ -30,7 +30,7 @@ expert_model.eval()
 
 trainer_config = dict(
     actor_optimizer_name = "Adam",
-    actor_optimizer_kwargs = dict(lr = 1e-5, weight_decay = 1e-4),
+    actor_optimizer_kwargs = dict(lr = 1e-3, weight_decay = 1e-4),
     batch_size = 24,
     )
 
@@ -58,7 +58,5 @@ while True:
     avg_agn, supervised_steps = algo.run(N)
     logs.append((avg_agn, supervised_steps))
     pickle.dump(logs, open(f'{logs_save_path}/{run_id}.p', "wb"))
-    if(avg_agn >= 2900):
-        torch.save(trainer.actor_model.state_dict(), f'{model_save_path}/{save_id}.pth')
-        sys.exit()
+    torch.save(trainer.actor_model.state_dict(), f'{model_save_path}/{save_id}.pth')
     save_id += N

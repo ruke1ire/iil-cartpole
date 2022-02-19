@@ -11,8 +11,8 @@ import sys
 import math
 import pickle
 
-run_name = "slrl_training_liberal_3"
-run_id = 0
+run_name = "slrl_pretrained_training"
+run_id = 11
 
 model_save_path = f'data/model/{run_name}/{run_id}'
 logs_save_path = f'data/logs/{run_name}'
@@ -22,12 +22,13 @@ os.makedirs(logs_save_path, exist_ok=True)
 env = MaxStepContinuousCartPoleEnv()
 
 actor_model = NNActor()
+actor_model.load_state_dict(torch.load("data/model/bc_training/101/2.pth"))
 critic_model = NNCritic()
 
 intervention_threshold = dict(
     x = 2.0,
     x_dot = 3.0,
-    theta = 12*2*math.pi/360,
+    theta = 10*2*math.pi/360,
     theta_dot = 4.0
 )
 
@@ -41,7 +42,7 @@ trainer_config = dict(
     critic_optimizer_name = "Adam",
     critic_optimizer_kwargs = dict(lr = 1e-4),
     discount = 0.99, 
-    tau = 0.01, 
+    tau = 0.005, 
     noise = 0.2, 
     actor_update_period = 2,
     batch_size = 24,
@@ -63,7 +64,7 @@ trainer = SLRL(
 
 logger = WandbLogger(name = run_name, id = run_id, config_dict = dict(trainer = trainer_config, algorithm = algorithm_config, intervention_threshold = intervention_threshold))
 
-algo = IIL_algorithm(env, trainer, expert_model, replay_buffer, noise = algorithm_config['noise'], logger = logger)
+algo = IIL_algorithm(env, trainer, expert_model, replay_buffer, noise = algorithm_config['noise'], logger = logger, offset_supervisor_steps=9000)
 
 logs = []
 save_id = 0
