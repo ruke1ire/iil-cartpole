@@ -98,7 +98,7 @@ class SLRL(Trainer):
         q1 = self.critic_1_model(state = state, action = action)
 
         # 6.1 Compute MSE loss for the critics")
-        critic_1_loss = ((q1 - target_q)**2).mean()
+        critic_1_loss = ((q1[demonstration_flag == 0.0] - target_q[demonstration_flag == 0])**2).mean()
 
         # 7.1 Optimize critic")
         self.critic_1_optimizer.zero_grad()
@@ -109,7 +109,7 @@ class SLRL(Trainer):
         q2 = self.critic_2_model(state = state, action = action)
 
         # 6.2 Compute MSE loss for the critics")
-        critic_2_loss = ((q2 - target_q)**2).mean()
+        critic_2_loss = ((q2[demonstration_flag == 0.0] - target_q[demonstration_flag == 0.0])**2).mean()
 
         # 7.2 Optimize critic")
         self.critic_2_optimizer.zero_grad()
@@ -122,7 +122,7 @@ class SLRL(Trainer):
         # 9. Compute actor loss")
         if(self.only_rl == False):
             actor_se = (actor_action - action)**2
-            actor_se[demonstration_flag == 0.0] = actor_se[demonstration_flag == 0.0]*0.1
+            actor_se[demonstration_flag == 0.0] = actor_se[demonstration_flag == 0.0]*0.0
             actor_loss_ = actor_se.mean()
         else:
             actor_loss_ = None
@@ -131,7 +131,7 @@ class SLRL(Trainer):
             # 10. Compute the negative critic values using the real critic")
             negative_value = -self.critic_1_model(
                                 state = state,
-                                action = actor_action)
+                                action = actor_action)[demonstration_flag == 0.0]
             negative_value = negative_value.mean()
         else:
             negative_value = None

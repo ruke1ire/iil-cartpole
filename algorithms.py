@@ -45,12 +45,18 @@ class IIL_algorithm:
 
                 next_state, reward, done, info = self.env.step(np.array(action_tensor.detach().cpu(), dtype = np.float32))
 
+                if(demo == True):
+                    reward = reward - 1
+
                 if(self.expert.check_bad_state(next_state) == True):
                     next_demo = True
+                    if(demo == False):
+                        episode_agent_step_list.append(episode_agent_step)
+                        episode_agent_step = 0
                 else:
                     next_demo = False
                 
-                if(next_demo == True and demo == False) or done == True:
+                if done == True:
                     termination_flag = True
                     episode_agent_step_list.append(episode_agent_step)
                     episode_agent_step = 0
