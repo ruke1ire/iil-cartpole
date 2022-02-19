@@ -11,7 +11,7 @@ import sys
 import math
 import pickle
 
-run_name = "slrl_training_liberal"
+run_name = "slrl_training_noisy_liberal_0"
 run_id = 3
 
 model_save_path = f'data/model/{run_name}/{run_id}'
@@ -42,7 +42,7 @@ trainer_config = dict(
     critic_optimizer_kwargs = dict(lr = 1e-4),
     discount = 0.99, 
     tau = 0.005, 
-    noise = 0.2, 
+    noise = 0.0, 
     actor_update_period = 2,
     batch_size = 24,
     )
@@ -67,7 +67,7 @@ algo = IIL_algorithm(env, trainer, expert_model, replay_buffer, noise = algorith
 
 logs = []
 save_id = 0
-N = 10
+N = 1
 while True:
     avg_len, avg_sup, avg_agn, steps, supervised_steps = algo.run(N)
     logs.append((avg_len, avg_sup, avg_agn, steps, supervised_steps))
