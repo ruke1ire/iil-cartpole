@@ -40,7 +40,7 @@ class IIL_algorithm:
                     action_tensor = self.agent(state_tensor, noise = self.noise)
                     episode_agent_step += 1
                 else:
-                    action_tensor = self.expert(state_tensor)
+                    action_tensor = self.expert(state_tensor, noise = self.noise)
                     episode_supervisor_step += 1
 
                 next_state, reward, done, info = self.env.step(np.array(action_tensor.detach().cpu(), dtype = np.float32))
