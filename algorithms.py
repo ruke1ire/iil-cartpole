@@ -67,7 +67,8 @@ class IIL_algorithm:
                 )
 
                 if(self.trainer is not None):
-                    self.trainer.train_one_mini_batch()
+                    for i in range(50):
+                        self.trainer.train_one_mini_batch()
                 
                 episode_step += 1
 

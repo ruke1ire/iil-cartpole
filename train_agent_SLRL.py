@@ -11,8 +11,8 @@ import sys
 import math
 import pickle
 
-run_name = "slrl_training_noisy_liberal_0"
-run_id = 3
+run_name = "slrl_training_noisy"
+run_id = 7
 
 model_save_path = f'data/model/{run_name}/{run_id}'
 logs_save_path = f'data/logs/{run_name}'
@@ -42,7 +42,7 @@ trainer_config = dict(
     critic_optimizer_kwargs = dict(lr = 1e-4),
     discount = 0.99, 
     tau = 0.005, 
-    noise = 0.0, 
+    noise = 0.2, 
     actor_update_period = 2,
     batch_size = 24,
     )

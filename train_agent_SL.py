@@ -11,8 +11,8 @@ import os
 import math
 import sys
 
-run_name = "sl_training_liberal"
-run_id = 3
+run_name = "sl_training_noisy"
+run_id = 11
 
 model_save_path = f'data/model/{run_name}/{run_id}'
 logs_save_path = f'data/logs/{run_name}'
@@ -60,7 +60,7 @@ algo = IIL_algorithm(env, trainer, expert_model, replay_buffer, noise = algorith
 
 logs = []
 save_id = 0
-N = 10
+N = 1
 while True:
     avg_len, avg_sup, avg_agn, steps, supervised_steps = algo.run(N)
     logs.append((avg_len, avg_sup, avg_agn, steps, supervised_steps))

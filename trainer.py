@@ -132,7 +132,7 @@ class SLRL(Trainer):
             negative_value = -self.critic_1_model(
                                 state = state,
                                 action = actor_action)
-            negative_value = negative_value.mean()
+            negative_value = negative_value.mean()*0.05
         else:
             negative_value = None
 
