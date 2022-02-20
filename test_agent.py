@@ -12,8 +12,8 @@ import math
 import pickle
 import glob
 
-run_name = "rl_training_noisy"
-run_id = 3
+run_name = "iarl_training_noisy"
+run_id = 7
 
 model_load_path = f'data/model/{run_name}/{run_id}'
 logs_save_path = f'data/logs/{run_name}/test'
