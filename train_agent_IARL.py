@@ -11,8 +11,8 @@ import sys
 import math
 import pickle
 
-run_name = "iarl_training_conservative"
-run_id = 15
+run_name = "iarl_training_noisy"
+run_id = 7
 
 model_save_path = f'data/model/{run_name}/{run_id}'
 logs_save_path = f'data/logs/{run_name}'
@@ -25,9 +25,9 @@ actor_model = NNActor()
 critic_model = NNCritic()
 
 intervention_threshold = dict(
-    x = 1.5,
+    x = 2.0,
     x_dot = 3.0,
-    theta = 7.5*2*math.pi/360,
+    theta = 12*2*math.pi/360,
     theta_dot = 4.0
 )
 
@@ -67,7 +67,7 @@ algo = IIL_algorithm(env, trainer, expert_model, replay_buffer, noise = algorith
 
 logs = []
 save_id = 0
-N = 10
+N = 1
 while True:
     avg_len, avg_sup, avg_agn, steps, supervised_steps = algo.run(N)
     logs.append((avg_len, avg_sup, avg_agn, steps, supervised_steps))
