@@ -1,5 +1,6 @@
 import torch
 import numpy as np
+import math
 
 from utils import *
 from logger import *
@@ -142,21 +143,41 @@ class RL_algorithm:
         return avg_len
 
 class Test_algorithm:
-    def __init__(self, env, tester):
+    def __init__(self, env, agent, logger = None):
         self.env = env
-        self.tester = tester
+        self.agent = agent
+        self.logger = logger
     
-    def run(self, num_of_episodes, models):
-        agent = models['actor']
+    def run(self, num_of_episodes):
+        avg_avg_error = 0
         for traj_no in range(1, num_of_episodes+1):
-            print(f"Generating trajectory no. : {traj_no}")
             done = False
             next_state = self.env.reset()
+            sum_error = np.zeros(4)
+            steps = 0
             while done == False:
                 state = next_state
 
                 state_tensor = torch.tensor(state, dtype = torch.float32)
 
-                action_tensor = agent(state_tensor)
+                action_tensor = self.agent(state_tensor)
 
-                next_state, reward, done, info = self.env.step(np.array(action_tensor, dtype = np.float32))
+                next_state, reward, done, info = self.env.step(np.array(action_tensor.detach().cpu(), dtype = np.float32))
+
+                normalized_abs_next_state = abs(next_state/np.array([2.4, 1, 15*math.pi/180, 1]))
+                sum_error += normalized_abs_next_state
+
+                steps += 1
+
+            avg_error = sum_error/steps
+            avg_avg_error += avg_error/num_of_episodes
+
+            log_dict = {
+                "Average Theta Error": avg_error[2], 
+                "Average X Error": avg_error[0], 
+                }
+
+            self.logger.log(DataType.dict, data = log_dict, key = None)
+        
+        print("Average Error: ", avg_avg_error)
+        return avg_avg_error
