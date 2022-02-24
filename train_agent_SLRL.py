@@ -12,7 +12,7 @@ import math
 import pickle
 
 run_name = "slrl_training_noisy"
-run_id = 7
+run_id = 19
 
 model_save_path = f'data/model/{run_name}/{run_id}'
 logs_save_path = f'data/logs/{run_name}'

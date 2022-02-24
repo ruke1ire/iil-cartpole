@@ -12,7 +12,7 @@ import math
 import sys
 
 run_name = "sl_training_noisy"
-run_id = 11
+run_id = 23
 
 model_save_path = f'data/model/{run_name}/{run_id}'
 logs_save_path = f'data/logs/{run_name}'
